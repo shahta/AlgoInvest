@@ -6,6 +6,6 @@ parser.add_argument('-t', '--ticker')
 args = parser.parse_args()
 
 ticker = args.ticker
-coke = TickerEval(ticker)
+symbol = TickerEval(ticker)
 print(f'Evaluating income statements for {ticker}')
-coke.evaluate_income_statement()
+symbol.evaluate_income_statement()
