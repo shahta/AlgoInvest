@@ -1,5 +1,6 @@
 import requests
 from src.Config import Config
+from termcolor import colored
 from time import sleep
 
 class TickerEval:
@@ -20,6 +21,7 @@ class TickerEval:
         self.__eval_interest_expense(statements)
         sleep(0.5)
         self.__eval_net_income(statements)
+        sleep(0.5)
         
     def __eval_gross_profit_margin(self, statements:list):
         # a company with a history of gross profit margins abvoe 40% is an early indication that the company has a DCA
@@ -67,6 +69,12 @@ class TickerEval:
         # Companies with net income less than 10% of total revenues tend to be in an industry with lots of competetion
         # where a single company cannot have an advantage over the others
         average_net_income, trend = self.__calculate_average(statements, 'netIncome', 'revenue', True)
+        if trend == 'increasing': 
+            self.points += 1
+            print('[EXCELLENT] Net income increasing every year for past five years')
+        if trend == 'decreasing': 
+            self.points -= 1
+            print('[POOR] Net income decreasing every year for past five years')
         if average_net_income >= 20.00:
             print(f'[EXCELLENT] Net income is at or above 20% of total revenues for the last five years at {average_net_income}%') 
             self.points += 1
@@ -75,17 +83,27 @@ class TickerEval:
             self.points += 0.5
         else: 
             print(f'[POOR] Net income is below 10% of total revenues for the last five years at {average_net_income}%')
-        if trend == 'increasing': self.points += 1
-        if trend == 'decreasing': self.points -= 1
         
+    def evaluate_balance_sheet(self):
+        statements = self.__get_statement('balance-sheet-statement')
+        self.__eval_cash_assets(statements)
 
+    def __eval_cash_assets(self, statements):
+        # Buffet mentions having a large cash pile is good but does not provide a quantifiable amount
+        # He does mention that companies with an up-trend in cash and cash equivalents and low debts are promising signs of a company with a DCA
+        # average_cash = self.__calculate_average(statements, 'cashAndCashEquivalents', 'debt', True)
+        pass
+
+    @staticmethod
+    def __average(values:list):
+        return sum(values) / len(values)
+        
     def __calculate_average(self, statements:list, entry:str, divisor_entry:str='grossProfit', trend:bool=False):
         values = []
         for statement in statements:
             percent = statement[entry] / statement[divisor_entry] * 100
             values.append(percent)
         if trend:
-            print(values)
             trend = self.__determine_trend(values)
             return (round(self.__average(values), 2), trend)
         return round(self.__average(values), 2)
@@ -110,14 +128,7 @@ class TickerEval:
         if increasing: return 'increasing'
         elif decreasing: return 'decreasing'
         else: return 'sideways'
-
-    @staticmethod
-    def __average(values:list):
-        return sum(values) / len(values)
-        
     
-    def evaluate_balance_sheet(self):
-        pass
 
     def evaluate_cashflow_statement(self):
         pass
