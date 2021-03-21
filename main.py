@@ -13,9 +13,8 @@ ticker_name = ''
 stocks = requests.get(f'https://financialmodelingprep.com/api/v3/stock/list?apikey={Config.KEY}').json()
 for stock in stocks:
     if stock['symbol'] == ticker: 
-        ticker_name = stock['name']
+        ticker_name = stock['name'].upper()
         break
-
 
 symbol = TickerEval(ticker)
 print(colored(f'-------------------------------EVALUATING INCOME STATEMENTS FOR {ticker_name}-------------------------------------', 'green'))
