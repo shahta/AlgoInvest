@@ -11,17 +11,17 @@ class TickerEval:
     def evaluate_income_statement(self):
         statements = self.__get_statement('income-statement')
         self.__eval_gross_profit_margin(statements)
-        sleep(0.5)
+        # sleep(0.5)
         self.__eval_SGA_expenses(statements)
-        sleep(0.5)
+        # sleep(0.5)
         self.__eval_RD_expenses(statements)
-        sleep(0.5)
+        # sleep(0.5)
         self.__eval_depreciation_expenses(statements)
-        sleep(0.5)
+        # sleep(0.5)
         self.__eval_interest_expense(statements)
-        sleep(0.5)
+        # sleep(0.5)
         self.__eval_net_income(statements)
-        sleep(0.5)
+        # sleep(0.5)
         
     def __eval_gross_profit_margin(self, statements:list):
         # a company with a history of gross profit margins abvoe 40% is an early indication that the company has a DCA
@@ -56,7 +56,7 @@ class TickerEval:
         # companies that have low depreciation and amoritzation expenses as a percentage of gross profit tend to have a DCA
         # Buffet does not mention a specific threshold so I went with 6% for the top tier and 10% for the middle tier
         average_depreciation_expense = self.__calculate_average(statements, 'depreciationAndAmortization')
-        self.__print_summary('Depreciation and ammortization expenses', 6, 10, average_depreciation_expense)
+        self.__print_summary('Depreciation and ammortization expenses', 6, 15, average_depreciation_expense)
 
     def __eval_interest_expense(self, statements):
         # Buffet indicates that companies with interest expenses less than 15% of operating income tend to have a DCA, the lower the better
@@ -68,11 +68,12 @@ class TickerEval:
         # Companies with net income greatar than 20% of total revenues tend to have a DCA
         # Companies with net income less than 10% of total revenues tend to be in an industry with lots of competetion
         # where a single company cannot have an advantage over the others
-        average_net_income, trend = self.__calculate_average(statements, 'netIncome', 'revenue', True)
+        average_net_income = self.__calculate_average(statements, 'netIncome', 'revenue')
+        trend = self.__determine_trend(statements, 'netIncome')
         if trend == 'increasing': 
             self.points += 1
             print('[EXCELLENT] Net income increasing every year for past five years')
-        if trend == 'decreasing': 
+        elif trend == 'decreasing': 
             self.points -= 1
             print('[POOR] Net income decreasing every year for past five years')
         if average_net_income >= 20.00:
@@ -87,25 +88,62 @@ class TickerEval:
     def evaluate_balance_sheet(self):
         statements = self.__get_statement('balance-sheet-statement')
         self.__eval_cash_assets(statements)
+        self.__eval_inventory(statements)
 
     def __eval_cash_assets(self, statements):
-        # Buffet mentions having a large cash pile is good but does not provide a quantifiable amount
+        # Buffet mentions having a large cash pile is good, but does not provide a quantifiable amount
         # He does mention that companies with an up-trend in cash and cash equivalents and low debts are promising signs of a company with a DCA
-        # average_cash = self.__calculate_average(statements, 'cashAndCashEquivalents', 'debt', True)
-        pass
+        trend = self.__determine_trend(statements, 'cashAndCashEquivalents')
+        if trend == 'increasing':
+            self.points += 1
+            print('[EXCELLENT] Cash assets increasing every year for past five years')
+        elif trend == 'decreasing': 
+            self.points -= 1
+            print('[POOR] Cash assets declining every year for past five years')
+        elif trend[0] == 'sideways': 
+            if trend[1] >= 3: 
+                self.points += 0.5
+                print('[GOOD] Cash assets increasing for majority of past five years')
+            elif trend[1] <= -3:
+                self.points -= 0.5
+                print('[OKAY] Cash assets decreasing for majority of past five years')
+            else:
+                print('[NEUTRAL] Cash assets have no major trend')
+        
+    def __eval_inventory(self, statements):
+        # Companies with increasing inventory indicates that there is demand for the product or service and is a sign of a company with a DCA
+        no_inventory = 0
+        for statement in statements:
+            if not statement['inventory']: no_inventory += 1
+        # Some companies do not have inventory, if thats the case, no need to evaluate this entry
+        if no_inventory == len(statements): return
+        trend = self.__determine_trend(statements, 'inventory')
+        if trend == 'increasing':
+            self.points += 1
+            print('[EXCELLENT] Inventory increasing every year for past five years')
+        elif trend == 'decreasing': 
+            self.points -= 1
+            print('[POOR] Inventory declining every year for past five years')
+        elif trend[0] == 'sideways': 
+            if trend[1] >= 3: 
+                self.points += 0.5
+                print('[GOOD] Inventory increasing for majority of past five years')
+            elif trend[1] <= -3:
+                self.points -= 0.5
+                print('[OKAY] Inventory decreasing for majority of past five years')
+            else:
+                print('[NEUTRAL] Inventory has no major trend')
 
     @staticmethod
     def __average(values:list):
         return sum(values) / len(values)
         
-    def __calculate_average(self, statements:list, entry:str, divisor_entry:str='grossProfit', trend:bool=False):
+    def __calculate_average(self, statements:list, entry:str, divisor_entry:str='grossProfit'):
         values = []
         for statement in statements:
+            if statement[divisor_entry] == 0: continue
             percent = statement[entry] / statement[divisor_entry] * 100
             values.append(percent)
-        if trend:
-            trend = self.__determine_trend(values)
-            return (round(self.__average(values), 2), trend)
         return round(self.__average(values), 2)
     
     def __print_summary(self, entry:str, upper_threshold:int, lower_threshold:int, entry_average:float):
@@ -118,16 +156,26 @@ class TickerEval:
         else:
             print(f'[POOR] {entry} greater than {lower_threshold}% of gross profits over past five years at {entry_average}%')
     
-    def __determine_trend(self, prices:list):
+    @staticmethod
+    def __determine_trend(statements:list, entry:str):
+        values = []
+        for statement in statements:
+            values.append(statement[entry])
         increasing = True; decreasing = True
-        i = 0
-        while i + 1 < len(prices):
-            if prices[i] < prices[i+1]: decreasing = False
-            else: increasing = False
-            i += 1
+        ups = 0; downs = 0
+        # iterating backwards since statements are stored most recent to oldest
+        i = len(values) - 1
+        while i - 1 >= 0:
+            if values[i] < values[i-1]: 
+                decreasing = False
+                ups += 1
+            else: 
+                increasing = False
+                downs += 1
+            i -= 1
         if increasing: return 'increasing'
         elif decreasing: return 'decreasing'
-        else: return 'sideways'
+        else: return ('sideways', ups if ups > downs else -downs)
     
 
     def evaluate_cashflow_statement(self):
