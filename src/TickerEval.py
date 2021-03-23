@@ -205,7 +205,7 @@ class TickerEval:
             self.__points += 0.5
             print(f'[GOOD] Some long term debt (${debt_average:,}), however, can be paid off within 7 years using current earnings')
         if average_years > 7:
-            print(f'[POOR] There is signifcant long term debt (${debt_average:,}), cannot be paid of within 7 years using current earnings')
+            print(f'[POOR] There is signifcant long term debt (${debt_average:,}), cannot be paid off within 7 years using current earnings')
     
     def __eval_debt_equity_ratio(self, statements):
         pass
