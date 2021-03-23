@@ -2,7 +2,7 @@ from src.TickerEval import TickerEval
 from src.IncomeStatement import IncomeStatement
 
 
-class IncomeStatement:
+class BalanceSheet:
     def __init__(self, ticker) -> None:
         self.ticker = ticker
         self.__points = 0
@@ -63,7 +63,7 @@ class IncomeStatement:
     def __eval_current_ratio(self, statements):
         # current ratio indicates whether a company can pay off its current liabilities 
         # ratio above 1 indicates company is liquid and can pay off debts; Current Ratio = Current Assets / Current Liabilities
-        current_ratio = round(self.__calculate_average(statements, 'totalCurrentAssets', 'totalCurrentLiabilities') / 100, 2)
+        current_ratio = round(TickerEval.__calculate_average(statements, 'totalCurrentAssets', 'totalCurrentLiabilities') / 100, 2)
         if current_ratio >= 1: 
             print(f'[EXCELLENT] Current ratio is above 1 at {current_ratio}, company is liquid and can pay off its short term debts and obligations')
         else:
