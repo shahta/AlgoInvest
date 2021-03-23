@@ -99,6 +99,8 @@ class TickerEval:
         self.__eval_current_ratio(statements)
         self.__eval_goodwill_intangibles(statements)
         self.__eval_return_on_assets(statements)
+        self.__eval_long_term_debt(statements)
+        self.__eval_retained_earnings(statements)
 
     def __eval_cash_assets(self, statements):
         # Buffet mentions having a large cash pile is good, but does not provide a quantifiable amount
@@ -178,12 +180,46 @@ class TickerEval:
         ratio = round(ratio / len(statements), 2)
         total_assets = round(total_assets / len(statements))
         if ratio < 0:
-            print(f'[POOR] Company has a return on assets of {ratio}%')
+            print(f'[POOR] Company has a negative return on assets of {ratio}%')
         elif ratio <= 15:
             print(f'[GOOD] Company has a return on assets of {ratio}%, this low ratio may indicate high total assets which provide barrier to entry and enhance DCA; Total Assets: ${total_assets:,}')
         else:
             print(f'[GOOD] Company has a return on assets of {ratio}%, this high ratio may indicate low assets which increase ease of entry and diminish DCA; Total Assets: ${total_assets:,}')
 
+    def __eval_long_term_debt(self, statements):
+        # Buffet indicates that companies with a DCA have little to none long term debt
+        # A good sign is if a company can pay off all its long term debt using its net earnings within 3-4 years, amazing companies can do it under 2
+        average_years = 0
+        debt_average = 0
+        for i in range(len(statements)):
+           debt = statements[i]['longTermDebt']
+           years_to_pay_off = statements[i]['longTermDebt'] / self.__net_income[i]
+           average_years += years_to_pay_off
+           debt_average += debt
+        average_years /= len(statements)
+        debt_average = round(debt_average / len(statements))
+        if average_years <= 3:
+            self.__points += 1
+            print(f'[EXCELLENT] No significant long term debt (${debt_average:,}), can be paid off within 3 years using current earnings',)
+        elif average_years <= 7:
+            self.__points += 0.5
+            print(f'[GOOD] Some long term debt (${debt_average:,}), however, can be paid off within 7 years using current earnings')
+        if average_years > 7:
+            print(f'[POOR] There is signifcant long term debt (${debt_average:,}), cannot be paid of within 7 years using current earnings')
+    
+    def __eval_debt_equity_ratio(self, statements):
+        pass
+
+    def __eval_retained_earnings(self, statements):
+        # one of the most crucial indicators of a company with a DCA
+        # if the retained earnings pool is growing, the company is growing its net worth and will theoretically make us rich also
+        trend = self.__determine_trend(statements, 'retainedEarnings')
+        if trend == 'increasing':
+            self.__points += 1
+            print('[EXCELLENT] Retained earnings pool increasing over 5 year period')
+        elif trend == 'decreasing':
+            self.__points -= 1
+            print('[POOR] Retained earnings pool decreasing over 5 year period')
 
     def __calculate_average(self, statements:list, entry:str, divisor_entry:str='grossProfit'):
         total = 0
