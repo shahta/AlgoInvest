@@ -1,13 +1,14 @@
-from src.TickerEval import TickerEval
 from src.IncomeStatement import IncomeStatement
-
+from src.another import functions
+import requests
+from src.Config import Config
 
 class BalanceSheet:
-    def __init__(self, ticker) -> None:
+    def __init__(self, ticker:str) -> None:
         self.ticker = ticker
         self.__points = 0
         self.__net_income = IncomeStatement.net_income
-        statements = TickerEval.__get_statement('balance-sheet-statement')
+        statements = IncomeStatement.get_statement('balance-sheet-statement')
         self.__eval_cash_assets(statements)
         self.__eval_inventory(statements)
         self.__eval_current_ratio(statements)
@@ -16,10 +17,21 @@ class BalanceSheet:
         self.__eval_long_term_debt(statements)
         self.__eval_retained_earnings(statements)
     
+    
+    # def evaluate_balance_sheet(self):
+    #     statements = IncomeStatement.__get_statement('balance-sheet-statement')
+    #     self.__eval_cash_assets(statements)
+    #     self.__eval_inventory(statements)
+    #     self.__eval_current_ratio(statements)
+    #     self.__eval_goodwill_intangibles(statements)
+    #     self.__eval_return_on_assets(statements)
+    #     self.__eval_long_term_debt(statements)
+    #     self.__eval_retained_earnings(statements)
+    
     def __eval_cash_assets(self, statements):
         # Buffet mentions having a large cash pile is good, but does not provide a quantifiable amount
         # He does mention that companies with an up-trend in cash and cash equivalents and low debts are promising signs of a company with a DCA
-        trend = TickerEval.__determine_trend(statements, 'cashAndCashEquivalents')
+        trend = IncomeStatement.__determine_trend(statements, 'cashAndCashEquivalents')
         if trend == 'increasing':
             self.__points += 1
             print('[EXCELLENT] Cash assets increasing every year for past five years')
@@ -43,7 +55,7 @@ class BalanceSheet:
             if not statement['inventory']: no_inventory += 1
         # Some companies do not have inventory, if thats the case, no need to evaluate this entry; else, check trend of inventory over five year period
         if no_inventory == len(statements): return
-        trend = TickerEval.__determine_trend(statements, 'inventory')
+        trend = IncomeStatement.__determine_trend(statements, 'inventory')
         if trend == 'increasing':
             self.__points += 1
             print('[EXCELLENT] Inventory increasing every year for past five years')
@@ -63,7 +75,7 @@ class BalanceSheet:
     def __eval_current_ratio(self, statements):
         # current ratio indicates whether a company can pay off its current liabilities 
         # ratio above 1 indicates company is liquid and can pay off debts; Current Ratio = Current Assets / Current Liabilities
-        current_ratio = round(TickerEval.__calculate_average(statements, 'totalCurrentAssets', 'totalCurrentLiabilities') / 100, 2)
+        current_ratio = round(IncomeStatement.__calculate_average(statements, 'totalCurrentAssets', 'totalCurrentLiabilities') / 100, 2)
         if current_ratio >= 1: 
             print(f'[EXCELLENT] Current ratio is above 1 at {current_ratio}, company is liquid and can pay off its short term debts and obligations')
         else:
@@ -73,7 +85,7 @@ class BalanceSheet:
         # when companies buy other companies at an excess of book value, the excess is stored under goodwill
         # if goodwill is increasing, the company is out buying other companies
         # intangibles are assets such as patents or copyrights that could provide a DCA
-        trend = TickerEval.__determine_trend(statements, 'goodwillAndIntangibleAssets')
+        trend = IncomeStatement.__determine_trend(statements, 'goodwillAndIntangibleAssets')
         if trend == 'increasing' or (trend[0] == 'sideways' and trend[1] >= 3):
             print('[GOOD] Intangibles and goodwill increasing, company is out buying other companies; check which companies, and if those companies also have a DCA')
 
@@ -127,7 +139,7 @@ class BalanceSheet:
     def __eval_retained_earnings(self, statements):
         # one of the most crucial indicators of a company with a DCA
         # if the retained earnings pool is growing, the company is growing its net worth and will theoretically make us rich also
-        trend = TickerEval.__determine_trend(statements, 'retainedEarnings')
+        trend = IncomeStatement.__determine_trend(statements, 'retainedEarnings')
         if trend == 'increasing':
             self.__points += 1
             print('[EXCELLENT] Retained earnings pool increasing over 5 year period')

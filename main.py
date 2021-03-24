@@ -1,12 +1,16 @@
 import argparse
+import multiprocessing
 from src.Config import Config
 from src.TickerEval import TickerEval
 import requests
+import time
 from termcolor import colored
 
+start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--ticker')
 args = parser.parse_args()
+
 
 ticker = args.ticker
 ticker_name = ''
@@ -17,7 +21,11 @@ for stock in stocks:
         break
 
 symbol = TickerEval(ticker)
+
 print(colored(f'-------------------------------EVALUATING INCOME STATEMENTS FOR {ticker_name}-------------------------------------', 'green'))
-symbol.evaluate_income_statement()
+# symbol.evaluate_income_statement()
 print(colored(f'-------------------------------EVALUATING BALANCE SHEETS FOR {ticker_name}-------------------------------------', 'green'))
-symbol.evaluate_balance_sheet()
+# symbol.evaluate_balance_sheet()
+
+end = (time.time() - start)
+print(end)
