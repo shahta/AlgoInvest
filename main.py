@@ -1,31 +1,21 @@
 import argparse
-import multiprocessing
-from src.Config import Config
 from src.TickerEval import TickerEval
-import requests
+from src.BalanceSheet import BalanceSheet
+from src.IncomeStatement import IncomeStatement
 import time
-from termcolor import colored
 
-start = time.time()
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--ticker')
 args = parser.parse_args()
 
 
 ticker = args.ticker
-ticker_name = ''
-stocks = requests.get(f'https://financialmodelingprep.com/api/v3/stock/list?apikey={Config.KEY}').json()
-for stock in stocks:
-    if stock['symbol'] == ticker: 
-        ticker_name = stock['name'].upper()
-        break
 
 symbol = TickerEval(ticker)
+# symbol_income = IncomeStatement(ticker)
+# symbol_balance = BalanceSheet(ticker)
+symbol.evaluate_income_statement()
+symbol.evaluate_balance_sheet()
 
-print(colored(f'-------------------------------EVALUATING INCOME STATEMENTS FOR {ticker_name}-------------------------------------', 'green'))
-# symbol.evaluate_income_statement()
-print(colored(f'-------------------------------EVALUATING BALANCE SHEETS FOR {ticker_name}-------------------------------------', 'green'))
-# symbol.evaluate_balance_sheet()
-
-end = (time.time() - start)
-print(end)
