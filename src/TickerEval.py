@@ -346,7 +346,7 @@ class TickerEval:
             if trend[1] > 0:
                 print(f'{self.good} Earnings per share increased {trend[1]} years')
             elif trend[1] < 0:
-                print(f'[OKAY] Earnings per share decreased {trend[1]} years')
+                print(f'[OKAY] Earnings per share decreased {-trend[1]} years')
         
         self.__earnings_per_share = [statement['netIncomePerShare'] for statement in statements]
         self.__pe_ratio = [statement['peRatio'] for statement in statements]
