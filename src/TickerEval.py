@@ -347,4 +347,3 @@ class TickerEval:
             'retainedEarnings': self.__retained_earnings
         }
         return values
-
