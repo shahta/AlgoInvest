@@ -19,6 +19,11 @@ class TickerEval:
         self.__retained_earnings = []
         self.__total_assets = []
         self.__long_term_debt = []
+        self.__market_cap = []
+        self.__earnings_per_share = []
+        self.__pe_ratio = []
+        self.__dividend_yield = []
+        self.__current_ratio = []
         self.__years = []
 
     def __calculate_average(self, statements:list, entry:str, divisor_entry:str='grossProfit'):
@@ -303,6 +308,7 @@ class TickerEval:
         statements = self.__get_statement('cash-flow-statement')
         self.__evaluate_capital_expenditures(statements)
         self.__eval_stock_repurchase(statements)
+        self.__eval_earnings_per_share()
 
     def __evaluate_capital_expenditures(self, statements):
         # Buffet indicates that companies with capital expenditures less than 50% of net income may have a DCA
@@ -326,6 +332,28 @@ class TickerEval:
         else:
             self.__points -= 1 
             print(f'{self.poor} Company not repurchasing shares over past 5 years')
+        
+    def __eval_earnings_per_share(self):
+        statements = self.__get_statement('key-metrics')
+        trend = self.__determine_trend(statements, "netIncomePerShare")
+        if trend == 'increasing':
+            self.__points += 1
+            print(f'{self.excellent} Earnings per share increasing each year')
+        elif trend == 'decreasing':
+            self.__points -= 1
+            print(f'{self.poor} Earnings per share decreasing each year')
+        elif trend[0] == 'sideways':
+            if trend[1] > 0:
+                print(f'{self.good} Earnings per share increased {trend[1]} years')
+            elif trend[1] < 0:
+                print(f'[OKAY] Earnings per share decreased {trend[1]} years')
+        
+        self.__earnings_per_share = [statement['netIncomePerShare'] for statement in statements]
+        self.__pe_ratio = [statement['peRatio'] for statement in statements]
+        self.__market_cap = [statement['marketCap'] for statement in statements]
+        self.__dividend_yield = [statement['dividendYield'] for statement in statements]
+        self.__current_ratio = [statement['currentRatio'] for statement in statements]
+
 
     def __print_summary(self, entry:str, upper_threshold:int, lower_threshold:int, entry_average:float):
         if entry_average <= upper_threshold:
@@ -344,6 +372,11 @@ class TickerEval:
             'netIncome': self.__net_income,
             'totalAssets': self.__total_assets, 
             'longTermDebt': self.__long_term_debt,
-            'retainedEarnings': self.__retained_earnings
+            'retainedEarnings': self.__retained_earnings,
+            'EPS': self.__earnings_per_share, 
+            'PE': self.__pe_ratio,
+            'marketCap': self.__market_cap,
+            'dividendYield': self.__dividend_yield,
+            'currentRatio': self.__current_ratio
         }
         return values
