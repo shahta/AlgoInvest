@@ -10,9 +10,16 @@ class TickerEval:
     def __init__(self, ticker:str):
         self.ticker = ticker
         self.__points = 0
-        # net income is used for a lot of calcs so declaring here for easy access
-        self.__net_income = []
         self.ticker_name = self.__get_company_name(self.ticker)
+        self.excellent = colored('[EXCELLENT]', 'green')
+        self.good = colored('[GOOD]', 'blue')
+        self.poor = colored('[POOR]', 'red')
+        # the following are used for plotting trends and other calcs
+        self.__net_income = []
+        self.__retained_earnings = []
+        self.__total_assets = []
+        self.__long_term_debt = []
+        self.__years = []
 
     def __calculate_average(self, statements:list, entry:str, divisor_entry:str='grossProfit'):
         total = 0
@@ -26,7 +33,7 @@ class TickerEval:
     def __determine_trend(statements:list, entry:str):
         increasing = True; decreasing = True
         ups = 0; downs = 0 #if trend is not strictly up or down, ups and downs will track which there are more of
-        # iterating backwards since statements are stored most recent to oldest
+        # iterating backwards since statements are stored in reverse chronological order
         i = len(statements) - 2
         while i - 1 >= 0:
             if statements[i][entry] < statements[i-1][entry]: 
@@ -37,6 +44,7 @@ class TickerEval:
                 downs += 1
             i -= 1
 
+        if increasing and decreasing: return 'stagnant'
         if increasing: return 'increasing'
         elif decreasing: return 'decreasing'
         else: return ('sideways', ups if ups > downs else -downs)
@@ -53,7 +61,7 @@ class TickerEval:
                 return stock['name'].upper()
                 
     def evaluate_income_statement(self):
-        print(colored(f'-------------------------------EVALUATING INCOME STATEMENTS FOR {self.ticker_name}-------------------------------------', 'green'))
+        print(colored(f'-------------------------------EVALUATING INCOME STATEMENTS FOR {self.ticker_name}-------------------------------------', 'cyan'))
         statements = self.__get_statement('income-statement')
         self.__eval_gross_profit_margin(statements)
         self.__eval_SGA_expenses(statements)
@@ -61,36 +69,40 @@ class TickerEval:
         self.__eval_depreciation_expenses(statements)
         self.__eval_interest_expense(statements)
         self.__eval_net_income(statements)
+        print(' ')
         
         
     def __eval_gross_profit_margin(self, statements:list):
         # a company with a history of gross profit margins abvoe 40% is an early indication that the company has a DCA
         average_margin = self.__calculate_average(statements, 'grossProfit', 'revenue')
         if average_margin >= 40.00:
-            print(f'[EXCELLENT] Gross Profit Margin is above 40% for the last five years at {average_margin}%') 
+            print(f'{self.excellent} Gross Profit Margin is above 40% for the last five years at {average_margin}%') 
             self.__points += 1
         elif average_margin >= 30.00: 
-            print(f'[GOOD] Gross Profit Margin is above 30% for the last five years at {average_margin}%')
+            print(f'{self.good} Gross Profit Margin is above 30% for the last five years at {average_margin}%')
             self.__points += 0.5
-        else: print(f'[POOR] Gross Profit Margin is below 30% for the last five years at {average_margin}%')
+        else: print(f'{self.poor} Gross Profit Margin is below 30% for the last five years at {average_margin}%')
 
     def __eval_SGA_expenses(self, statements):
         # a company with SGA expenses as a percentage of gross profits consistently lower than 35% may have a DCA
         average_SGA_expense = self.__calculate_average(statements, 'generalAndAdministrativeExpenses')
         self.__print_summary('Sales and general admin expenses', 35, 50, average_SGA_expense)
+
+        # just getting years for all statements here
+        self.__years = [statement['date'][:4] for statement in statements]
     
     def __eval_RD_expenses(self, statements):
         # Buffet indicates that companies with little to none R&D expenses tend to have a DCA working in their favour
         # I have chosen a conservative 10% of gross profits as a middle ground for this entry on the income sheet
         average_RD_expense = self.__calculate_average(statements, 'researchAndDevelopmentExpenses')
         if average_RD_expense == 0.00:
-            print('[EXCELLENT] No research and development costs over past five years')
+            print(f'{self.excellent} No research and development costs over past five years')
             self.__points += 1
         elif average_RD_expense <= 10.00:
-            print(f'[GOOD] Research and development costs less than 10% of gross profits over past five years at {average_RD_expense}%')
+            print(f'{self.good} Research and development costs less than 10% of gross profits over past five years at {average_RD_expense}%')
             self.__points += 0.5
         else:
-            print(f'[POOR] Research and development costs greatar than 10% of gross profits over past five years at {average_RD_expense}%')
+            print(f'{self.poor} Research and development costs greatar than 10% of gross profits over past five years at {average_RD_expense}%')
 
     def __eval_depreciation_expenses(self, statements):
         # companies that have low depreciation and amoritzation expenses as a percentage of gross profit tend to have a DCA
@@ -110,27 +122,27 @@ class TickerEval:
         # where a single company cannot have an advantage over the others
         average_net_income = self.__calculate_average(statements, 'netIncome', 'revenue')
         if average_net_income >= 20.00:
-            print(f'[EXCELLENT] Net income is at or above 20% of total revenues for the last five years at {average_net_income}%') 
+            print(f'{self.excellent} Net income is at or above 20% of total revenues for the last five years at {average_net_income}%') 
             self.__points += 1
         elif average_net_income >= 10.00: 
-            print(f'[GOOD] Net income is at or above 10% of total revenues for the last five years at {average_net_income}%')
+            print(f'{self.good} Net income is at or above 10% of total revenues for the last five years at {average_net_income}%')
             self.__points += 0.5
         else: 
-            print(f'[POOR] Net income is below 10% of total revenues for the last five years at {average_net_income}%')
+            print(f'{self.poor} Net income is below 10% of total revenues for the last five years at {average_net_income}%')
 
         trend = self.__determine_trend(statements, 'netIncome')
         if trend == 'increasing': 
             self.__points += 1
-            print('[EXCELLENT] Net income increasing every year for past five years')
+            print(f'{self.excellent} Net income increasing every year for past five years')
         elif trend == 'decreasing': 
             self.__points -= 1
-            print('[POOR] Net income decreasing every year for past five years')
+            print(f'{self.poor} Net income decreasing every year for past five years')
 
         # populating self.__net_income
         self.__net_income = [statement['netIncome'] for statement in statements]
 
     def evaluate_balance_sheet(self):
-        print(colored(f'-------------------------------EVALUATING BALANCE SHEETS FOR {self.ticker_name}-------------------------------------', 'green'))
+        print(colored(f'-------------------------------EVALUATING BALANCE SHEETS FOR {self.ticker_name}----------------------------------------', 'cyan'))
         statements = self.__get_statement('balance-sheet-statement')
         self.__eval_cash_assets(statements)
         self.__eval_inventory(statements)
@@ -139,7 +151,9 @@ class TickerEval:
         self.__eval_return_on_assets(statements)
         self.__eval_long_term_debt(statements)
         self.__eval_retained_earnings(statements)
-        self.__eval_debt_equity_ratio(statements)
+        # self.__eval_debt_equity_ratio(statements)
+        self.__eval_return_shareholder_equity(statements)
+        print(' ')
 
     def __eval_cash_assets(self, statements):
         # Buffet mentions having a large cash pile is good, but does not provide a quantifiable amount
@@ -147,14 +161,14 @@ class TickerEval:
         trend = self.__determine_trend(statements, 'cashAndCashEquivalents')
         if trend == 'increasing':
             self.__points += 1
-            print('[EXCELLENT] Cash assets increasing every year for past five years')
+            print(f'{self.excellent} Cash assets increasing every year for past five years')
         elif trend == 'decreasing': 
             self.__points -= 1
-            print('[POOR] Cash assets declining every year for past five years')
+            print(f'{self.poor} Cash assets declining every year for past five years')
         elif trend[0] == 'sideways': 
             if trend[1] >= 3: 
                 self.__points += 0.5
-                print('[GOOD] Cash assets increasing for majority of past five years')
+                print(f'{self.good} Cash assets increasing for majority of past five years')
             elif trend[1] <= -3:
                 self.__points -= 0.5
                 print('[OKAY] Cash assets decreasing for majority of past five years')
@@ -171,14 +185,14 @@ class TickerEval:
         trend = self.__determine_trend(statements, 'inventory')
         if trend == 'increasing':
             self.__points += 1
-            print('[EXCELLENT] Inventory increasing every year for past five years')
+            print(f'{self.excellent} Inventory increasing every year for past five years')
         elif trend == 'decreasing': 
             self.__points -= 1
-            print('[POOR] Inventory declining every year for past five years')
+            print(f'{self.poor} Inventory declining every year for past five years')
         elif trend[0] == 'sideways': 
             if trend[1] >= 3: 
                 self.__points += 0.5
-                print('[GOOD] Inventory increasing for majority of past five years')
+                print(f'{self.good} Inventory increasing for majority of past five years')
             elif trend[1] <= -3:
                 self.__points -= 0.5
                 print('[OKAY] Inventory decreasing for majority of past five years')
@@ -190,9 +204,11 @@ class TickerEval:
         # ratio above 1 indicates company is liquid and can pay off debts; Current Ratio = Current Assets / Current Liabilities
         current_ratio = round(self.__calculate_average(statements, 'totalCurrentAssets', 'totalCurrentLiabilities') / 100, 2)
         if current_ratio >= 1: 
-            print(f'[EXCELLENT] Current ratio is above 1 at {current_ratio}, company is liquid and can pay off its short term debts and obligations')
+            print(f'{self.excellent} Current ratio is above 1 at {current_ratio}, company is liquid and can pay off its short term debts and obligations')
         else:
             print(f'[NEUTRAL] Current ratio is below 1 at {current_ratio}, consult net earnings to check if company can pay off its short term debts and obligations using earning power')
+        
+        self.__total_assets = [statement['totalAssets'] for statement in statements]
     
     def __eval_goodwill_intangibles(self, statements):
         # when companies buy other companies at an excess of book value, the excess is stored under goodwill
@@ -200,7 +216,7 @@ class TickerEval:
         # intangibles are assets such as patents or copyrights that could provide a DCA
         trend = self.__determine_trend(statements, 'goodwillAndIntangibleAssets')
         if trend == 'increasing' or (trend[0] == 'sideways' and trend[1] >= 3):
-            print('[GOOD] Intangibles and goodwill increasing, company is out buying other companies; check which companies, and if those companies also have a DCA')
+            print(f'{self.good} Intangibles and goodwill increasing, company is out buying other companies; check which companies, and if those companies also have a DCA')
 
     def __eval_return_on_assets(self, statements):
         # return on assets is a ratio of how efficiently company management is utilizing assets to generate income; traditionally, the higher the ratio the better
@@ -219,11 +235,11 @@ class TickerEval:
         ratio = round(ratio / len(statements), 2)
         total_assets = round(total_assets / len(statements))
         if ratio < 0:
-            print(f'[POOR] Company has a negative return on assets of {ratio}%')
+            print(f'{self.poor} Company has a negative return on assets of {ratio}%')
         elif ratio <= 15:
-            print(f'[GOOD] Company has a return on assets of {ratio}%, this low ratio may indicate high total assets which provide barrier to entry and enhance DCA; Total Assets: ${total_assets:,}')
+            print(f'{self.good} Company has a return on assets of {ratio}%, this low ratio may indicate high total assets which provide barrier to entry and enhance DCA; Total Assets: ${total_assets:,}')
         else:
-            print(f'[GOOD] Company has a return on assets of {ratio}%, this high ratio may indicate low assets which increase ease of entry and diminish DCA; Total Assets: ${total_assets:,}')
+            print(f'{self.good} Company has a return on assets of {ratio}%, this high ratio may indicate low assets which increase ease of entry and diminish DCA; Total Assets: ${total_assets:,}')
 
     def __eval_long_term_debt(self, statements):
         # Buffet indicates that companies with a DCA have little to none long term debt
@@ -239,17 +255,35 @@ class TickerEval:
         debt_average = round(debt_average / len(statements))
         if average_years <= 3:
             self.__points += 1
-            print(f'[EXCELLENT] No significant long term debt (${debt_average:,}), can be paid off within 3 years using current earnings',)
+            print(f'{self.excellent} Long term debt (${debt_average:,}), can be paid off within 3 years using current earnings',)
         elif average_years <= 7:
             self.__points += 0.5
-            print(f'[GOOD] Some long term debt (${debt_average:,}), however, can be paid off within 7 years using current earnings')
-        if average_years > 7:
-            print(f'[POOR] There is signifcant long term debt (${debt_average:,}), cannot be paid off within 7 years using current earnings')
+            print(f'{self.good} Long term debt (${debt_average:,}), however, can be paid off within 7 years using current earnings')
+        elif average_years > 7:
+            print(f'{self.poor} Long term debt (${debt_average:,}), cannot be paid off within 7 years using current earnings')
+
+        self.__long_term_debt = [statement['longTermDebt'] for statement in statements]
     
-    def __eval_debt_equity_ratio(self, statements):
-        average_debt_quity_ratio = self.__calculate_average(statements, 'totalLiabilities', 'totalStockholdersEquity')
-        print(statements[0]['totalStockholdersEquity'])
-        print(average_debt_quity_ratio / 100)
+    # def __eval_debt_equity_ratio(self, statements):
+    #     average_debt_quity_ratio = self.__calculate_average(statements, 'totalLiabilities', 'totalStockholdersEquity')
+    #     print(statements[0]['totalStockholdersEquity'])
+    #     print(average_debt_quity_ratio / 100)
+
+    def __eval_return_shareholder_equity(self, statements):
+        # higher return the better, one of the best indicators for a company with a DCA
+        # some companies have a negative return; if theres a history of strong net earnings, chances are that company also has a DCA
+        average_return = 0
+        for i in range(len(statements)):
+            average_return += self.__net_income[i] / statements[i]['totalStockholdersEquity']
+        average_return = round(average_return / len(statements), 2)
+        if average_return >= 0.3:
+            print(f"{self.excellent} High return on shareholders' equity: {average_return}")
+        elif average_return >= 0.15:
+            print(f"{self.good} Good return on shareholders' equity: {average_return}")
+        elif average_return >= 0:
+            print(f"{self.poor} Low return on shareholders' equity: {average_return}")
+        else:
+            print(f"[NEUTRAL] Negative shareholders' equity ({average_return}), if net income history is strong than company has a DCA")
 
     def __eval_retained_earnings(self, statements):
         # one of the most crucial indicators of a company with a DCA
@@ -257,20 +291,60 @@ class TickerEval:
         trend = self.__determine_trend(statements, 'retainedEarnings')
         if trend == 'increasing':
             self.__points += 1
-            print('[EXCELLENT] Retained earnings pool increasing over 5 year period')
+            print(f'{self.excellent} Retained earnings pool increasing over 5 year period')
         elif trend == 'decreasing':
             self.__points -= 1
-            print('[POOR] Retained earnings pool decreasing over 5 year period')
+            print(f'{self.poor} Retained earnings pool decreasing over 5 year period')
+        
+        self.__retained_earnings = [statement['retainedEarnings'] for statement in statements]
+    
+    def evaluate_cashflow_statement(self):
+        print(colored(f'------------------------------EVALUATING CASH FLOW STATEMENTS FOR {self.ticker_name}-----------------------------------', 'cyan'))
+        statements = self.__get_statement('cash-flow-statement')
+        self.__evaluate_capital_expenditures(statements)
+        self.__eval_stock_repurchase(statements)
+
+    def __evaluate_capital_expenditures(self, statements):
+        # Buffet indicates that companies with capital expenditures less than 50% of net income may have a DCA
+        average_capital_expenditures = abs(self.__calculate_average(statements, 'capitalExpenditure', 'netIncome'))
+        if average_capital_expenditures <= 50:
+            self.__points += 1
+            print(f'{self.excellent} Low capital expenditures to net income: {average_capital_expenditures}%')
+        else:
+            print(f"{self.poor} High capital expenditures to net income: {average_capital_expenditures}%")
+
+    def __eval_stock_repurchase(self, statements):
+        years_repurchased = 0
+        for statement in statements:
+            if statement['commonStockRepurchased']: years_repurchased += 1
+        if years_repurchased == len(statements):
+            self.__points += 1
+            print(f'{self.excellent} Company repurchasing shares each year')
+        elif years_repurchased > 0:
+            self.__points += 0.5
+            print(f'{self.good} Company repruchased shares {years_repurchased}/5 years')
+        else:
+            self.__points -= 1 
+            print(f'{self.poor} Company not repurchasing shares over past 5 years')
 
     def __print_summary(self, entry:str, upper_threshold:int, lower_threshold:int, entry_average:float):
         if entry_average <= upper_threshold:
-            print(f'[EXCELLENT] {entry} less than or equal to {upper_threshold}% of gross profits over past five years at {entry_average}%')
+            print(f'{self.excellent} {entry} less than or equal to {upper_threshold}% of gross profits over past five years at {entry_average}%')
             self.__points += 1
         elif entry_average <= lower_threshold:
-            print(f'[GOOD] {entry} less than or equal to {lower_threshold}% of gross profits over past five years at {entry_average}%')
+            print(f'{self.good} {entry} less than or equal to {lower_threshold}% of gross profits over past five years at {entry_average}%')
             self.__points += 0.5
         else:
-            print(f'[POOR] {entry} greater than {lower_threshold}% of gross profits over past five years at {entry_average}%')
-    
-    def evaluate_cashflow_statement(self):
-        pass
+            print(f'{self.poor} {entry} greater than {lower_threshold}% of gross profits over past five years at {entry_average}%')
+
+    @property
+    def plot_values(self):
+        values = {
+            'years': self.__years,
+            'netIncome': self.__net_income,
+            'totalAssets': self.__total_assets, 
+            'longTermDebt': self.__long_term_debt,
+            'retainedEarnings': self.__retained_earnings
+        }
+        return values
+
