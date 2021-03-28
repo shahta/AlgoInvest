@@ -1,6 +1,4 @@
 from matplotlib import pyplot as plt
-import matplotlib
-
 
 
 class TrendPlot:
@@ -15,6 +13,7 @@ class TrendPlot:
         self.__total_assets = list(reversed(plot_values['totalAssets']))
         self.__long_term_debt = list(reversed(plot_values['longTermDebt']))
         self.__retained_earnings = list(reversed(plot_values['retainedEarnings']))
+        self.__stock_repurchased = list(reversed(plot_values['stockRepurchased']))
         self.company = company
     
     def plot_metrics(self):
@@ -22,8 +21,9 @@ class TrendPlot:
         plt.figure(1)
         plt.plot(self.__years, self.__net_income, marker='.', markersize=12, label="Net Income" )
         plt.plot(self.__years, self.__total_assets, marker='.', markersize=12, label="Total Assets" )
-        plt.plot(self.__years, self.__market_cap, marker='.', markersize=12, label="Market Cap" )
+        # plt.plot(self.__years, self.__market_cap, marker='.', markersize=12, label="Market Cap" )
         plt.plot(self.__years, self.__long_term_debt, marker='.', markersize=12, label="Long Term Debt" )
+        plt.plot(self.__years, self.__stock_repurchased, marker='.', markersize=12, label="Stock Repurchased" )
         plt.plot(self.__years, self.__retained_earnings, marker='.', markersize=12, label="Retained Earnings" )
         plt.xlabel('YEAR')
         plt.ylabel('US DOLLARS')
