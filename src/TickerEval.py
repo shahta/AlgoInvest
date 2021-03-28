@@ -14,6 +14,7 @@ class TickerEval:
         self.excellent = colored('[EXCELLENT]', 'green')
         self.good = colored('[GOOD]', 'blue')
         self.poor = colored('[POOR]', 'red')
+        self.analysis = colored('[ANALYSIS]', 'yellow')
 
         # the following are used for plotting trends and other calcs
         self.__net_income = []
@@ -210,7 +211,7 @@ class TickerEval:
         # but for that reason its also harder for others to break in to the industry since they have to raise enough total assets to match and compete with the company
         ratio = 0
         total_assets = 0
-        for i in range(len(statements)):
+        for i in range(min(len(statements), len(self.__net_income))):
             assets = statements[i]['totalAssets']
             # checking for divide by zero error
             if not assets: continue
@@ -230,7 +231,7 @@ class TickerEval:
         # A good sign is if a company can pay off all its long term debt using its net earnings within 3-4 years, amazing companies can do it under 2
         average_years = 0
         debt_average = 0
-        for i in range(len(statements)):
+        for i in range(min(len(self.__net_income),len(statements))):
            debt = statements[i]['longTermDebt']
            years_to_pay_off = statements[i]['longTermDebt'] / self.__net_income[i]
            average_years += years_to_pay_off
@@ -253,7 +254,7 @@ class TickerEval:
         # some companies have a negative return; if theres a history of strong net earnings, chances are that company also has a DCA
         # chosen thresholds based off companies with known DCA
         average_return = 0
-        for i in range(len(statements)):
+        for i in range(min(len(self.__net_income), len(statements))):
             if statements[i]['totalStockholdersEquity'] == 0: continue
             average_return += self.__net_income[i] / statements[i]['totalStockholdersEquity']
         average_return = round(average_return / len(statements), 2)
@@ -320,6 +321,12 @@ class TickerEval:
         self.__dividend_yield = [statement['dividendYield'] for statement in statements]
         self.__current_ratio = [statement['currentRatio'] for statement in statements]
 
+    def get_analysis(self):
+        print(self.__points)
+        if self.__points >= 8:
+            print(f'{self.analysis} Our calculations strongly indicate that this security may posess a DCA and is a good buy')
+        else:
+            print(f'{self.analysis} Our calculations indicate this security does not posses a valid DCA and is not a good buy for the long term investor')
 
     def __print_summary(self, entry:str, upper_threshold:int, lower_threshold:int, entry_average:float):
         if entry_average <= upper_threshold:
