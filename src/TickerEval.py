@@ -325,6 +325,8 @@ class TickerEval:
         print(self.__points)
         if self.__points >= 8:
             print(f'{self.analysis} Our calculations strongly indicate that this security may posess a DCA and is a good buy')
+        elif self.__points >= 6.5:
+            print(f'{self.analysis} Our calculations strongly indicate that this security is quite promising and has ')
         else:
             print(f'{self.analysis} Our calculations indicate this security does not posses a valid DCA and is not a good buy for the long term investor')
 

@@ -19,7 +19,7 @@ symbol = TickerEval(ticker.upper())
 symbol.evaluate_income_statement()
 symbol.evaluate_balance_sheet()
 symbol.evaluate_cashflow_statement()
-# trend_graph = TrendPlot(symbol.plot_values, symbol.ticker_name)
+trend_graph = TrendPlot(symbol.plot_values, symbol.ticker_name)
 print(time.perf_counter())
 # trend_graph.plot_metrics()
 
