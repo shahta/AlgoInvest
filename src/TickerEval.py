@@ -1,9 +1,6 @@
-# from src.IncomeStatement import IncomeStatement
 import requests
 from src.Config import Config
-# from src.BalanceSheet import BalanceSheet
 from termcolor import colored
-# from time import sleep
 
 
 class TickerEval:
@@ -322,11 +319,10 @@ class TickerEval:
         self.__current_ratio = [statement['currentRatio'] for statement in statements]
 
     def get_analysis(self):
-        print(self.__points)
         if self.__points >= 8:
-            print(f'{self.analysis} Our calculations strongly indicate that this security may posess a DCA and is a good buy')
+            print(f'{self.analysis} Our calculations strongly indicate that this security may posess a DCA and is a good buy for the long term investor')
         elif self.__points >= 6.5:
-            print(f'{self.analysis} Our calculations strongly indicate that this security is quite promising and has ')
+            print(f'{self.analysis} Our calculations indicate that this security is quite promising and has great potential but not enough for a DCA')
         else:
             print(f'{self.analysis} Our calculations indicate this security does not posses a valid DCA and is not a good buy for the long term investor')
 
