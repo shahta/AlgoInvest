@@ -22,8 +22,10 @@ conviction = input("Would you like our conviction on this security? (y/N) ")
 if conviction.lower() == 'y':
     symbol.get_analysis()
 trend_graph = TrendPlot(symbol.plot_values, symbol.ticker_name)
-t4 = threading.Thread(trend_graph.plot_metrics())
-t4.start()
+try:
+    t4 = threading.Thread(trend_graph.plot_metrics())
+    t4.start()
+except Exception as e: print(str(e))
 t2.join()
 t3.join()
 t4.join()

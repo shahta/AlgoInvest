@@ -230,6 +230,7 @@ class TickerEval:
         debt_average = 0
         for i in range(min(len(self.__net_income),len(statements))):
            debt = statements[i]['longTermDebt']
+           if not self.__net_income[i]: continue
            years_to_pay_off = statements[i]['longTermDebt'] / self.__net_income[i]
            average_years += years_to_pay_off
            debt_average += debt
@@ -322,7 +323,7 @@ class TickerEval:
         if self.__points >= 8:
             print(f'{self.analysis} Our calculations strongly indicate that this security may posess a DCA and is a good buy for the long term investor')
         elif self.__points >= 6.5:
-            print(f'{self.analysis} Our calculations indicate that this security is quite promising and has great potential but not enough for a DCA')
+            print(f'{self.analysis} Our calculations indicate that this security is quite promising and has great potential but does not have a DCA yet')
         else:
             print(f'{self.analysis} Our calculations indicate this security does not posses a valid DCA and is not a good buy for the long term investor')
 
