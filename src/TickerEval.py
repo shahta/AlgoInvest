@@ -256,6 +256,7 @@ class TickerEval:
             if statements[i]['totalStockholdersEquity'] == 0: continue
             average_return += self.__net_income[i] / statements[i]['totalStockholdersEquity']
         average_return = round(average_return / len(statements), 2)
+        average_return = round(average_return / len(statements), 2)
 
         if average_return >= 0.3:
             print(f"{self.excellent} High return on shareholders' equity: {average_return}")
